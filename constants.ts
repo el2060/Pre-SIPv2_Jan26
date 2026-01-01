@@ -40,8 +40,8 @@ export const SCENARIOS: Scenario[] = [
     context: 'The children are running around noisily after outdoor play. You need to get them to 1) Quiet down, 2) Drink water, and 3) Sit in a circle.',
     aiContext: 'Evaluate if the user uses Positive Guidance (iTeach). Bad: "Stop running!". Good: "Let\'s use our walking feet." Focus on Self-Management (SEC).',
     tags: ['Routine Management', 'Positive Guidance'],
-    mode: 'voice',
-    initialMessage: '(Sound of running feet and loud laughter) catch me if you can!! We don\'t want to sit down!'
+    mode: 'text',
+    initialMessage: '*Running around noisily and laughing* Catch me if you can!! We don\'t want to sit down!'
   },
   {
     id: 'c2',
@@ -56,7 +56,7 @@ export const SCENARIOS: Scenario[] = [
     mode: 'text'
   },
 
-  // --- Role: Parents (Matches Screenshots) ---
+  // --- Role: Parents ---
   {
     id: 'p1',
     roleId: 'parents',
@@ -72,14 +72,14 @@ export const SCENARIOS: Scenario[] = [
   {
     id: 'p2',
     roleId: 'parents',
-    title: 'Parent Call: Bilingual Concern',
-    titleZh: '家长通话：双语进展关切（语音）',
+    title: 'Parent Inquiry: Bilingual Concern',
+    titleZh: '家长咨询：双语进展关切',
     difficulty: 'Intermediate',
-    description: 'A K1 parent calls concerned their child resists Mandarin.',
-    context: 'A K1 parent calls concerned their child resists Mandarin. Give spoken feedback—acknowledge feelings, share observations, and suggest home strategies.',
+    description: 'A K1 parent messages concerned their child resists Mandarin.',
+    context: 'A K1 parent messages you concerned their child resists Mandarin. Reply to acknowledge feelings, share observations, and suggest home strategies.',
     aiContext: 'Evaluate tone: Empathetic. Content: Suggest authentic learning strategies (iTeach) like songs or cartoons, not drilling.',
     tags: ['Family Partnership', 'Bilingual Support'],
-    mode: 'voice'
+    mode: 'text'
   },
   {
     id: 'p3',
@@ -96,14 +96,14 @@ export const SCENARIOS: Scenario[] = [
   {
     id: 'p4',
     roleId: 'parents',
-    title: 'Difficult Talk: Referral (Speaking)',
-    titleZh: '难点谈话：转介（语音）',
+    title: 'Difficult Talk: Referral',
+    titleZh: '难点谈话：转介',
     difficulty: 'Challenging',
-    description: 'Sensitively discuss possible speech delay.',
-    context: 'In a phone call, sensitively discuss possible speech delay, reference ECDA/KKH pathways, and co-create a support plan in Mandarin/English.',
+    description: 'Sensitively discuss possible speech delay via chat.',
+    context: 'Sensitively discuss possible speech delay, reference ECDA/KKH pathways, and co-create a support plan in Mandarin/English.',
     aiContext: 'CRITICAL: User must NOT diagnose. User should share observations (objective) and suggest professional assessment. Tone: Supportive.',
     tags: ['Professional Ethics', 'Sensitive Communication'],
-    mode: 'voice'
+    mode: 'text'
   },
 
   // --- Role: Teachers ---

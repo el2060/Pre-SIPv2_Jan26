@@ -17,8 +17,6 @@ export const callGeminiText = async (
 ): Promise<{ text: string; options?: string[] }> => {
   
   // Construct the conversation history for the context
-  // We filter only the last few messages to keep context relevant but concise, 
-  // or send all if needed. For this roleplay, sending all is safer.
   const historyContext = history.map(msg => 
     `${msg.sender === 'user' ? 'Student' : 'Roleplay Character'}: ${msg.text}`
   ).join('\n');
@@ -43,6 +41,7 @@ export const callGeminiText = async (
     6. If the student uses good scaffolding/strategies, react positively.
     7. Keep responses concise (under 40 words) and conversational, unless explaining a complex teacher concept.
     8. Do NOT break character. Do not give advice as an AI. You ARE the character.
+    9. Even though this is text, if the scenario implies a specific emotion, describe it in asterisks like *sighs* or *smiles*.
     
     Current Interaction History:
     ${historyContext}
@@ -53,17 +52,11 @@ export const callGeminiText = async (
   try {
     const response = await ai.models.generateContent({
       model: MODEL_CHAT,
-      contents: systemInstruction, // In 1.5/2.0 we might pass history differently, but passing as a block is robust for short roleplays.
+      contents: systemInstruction,
     });
 
     const text = response.text || (language === 'zh' ? "系统繁忙，请重试。" : "System busy, please try again.");
     
-    // For specific scenarios like 't1' (Teacher Inquiry), we might want to generate options dynamically if appropriate
-    // But for general chat, we return just text.
-    // If it is the specific 't1' scenario and the AI detects a need for a decision point, 
-    // we could parse that. For now, we will stick to text to ensure fluidity, 
-    // unless the prompt specifically asks for options (which we can engineer).
-
     return { text };
 
   } catch (error) {
@@ -73,49 +66,6 @@ export const callGeminiText = async (
         ? "连接稍微有点问题，我们继续刚才的话题..." 
         : "Connection hiccup, let's continue where we left off..." 
     };
-  }
-};
-
-export const callGeminiVoice = async (
-  history: Message[],
-  scenario: Scenario,
-  language: Language = 'en'
-): Promise<string> => {
-  // Logic is similar to Text, but the prompt emphasizes 'spoken' characteristics
-  // Since we don't have the user's latest input here (it's in history), we extract it.
-  
-  const lastUserMessage = [...history].reverse().find(m => m.sender === 'user');
-  const input = lastUserMessage?.text || "(No input)";
-
-  const langInstruction = language === 'zh' 
-    ? "Respond strictly in Mandarin Chinese (Simplified). Use colloquial spoken expressions." 
-    : "Respond in English. Use colloquial spoken expressions.";
-
-  const systemInstruction = `
-    You are roleplaying a ${scenario.roleId} in a voice call/interaction.
-    Scenario: ${scenario.title}.
-    Context: ${scenario.context}
-    Rules: ${scenario.aiContext}
-    
-    ${langInstruction}
-    
-    Instruction: Generate the spoken response for the character. 
-    Include emotional cues in brackets if necessary, e.g., (Sighs), (Laughs).
-    Keep it short and authentic to spoken conversation.
-    
-    Student said: "${input}"
-  `;
-
-  try {
-    const response = await ai.models.generateContent({
-      model: MODEL_CHAT,
-      contents: systemInstruction,
-    });
-
-    return response.text || "...";
-  } catch (error) {
-    console.error("Gemini Voice API Error:", error);
-    return "...";
   }
 };
 

@@ -6,7 +6,7 @@ import RoleSelector from './components/RoleSelector';
 import ScenarioSelector from './components/ScenarioSelector';
 import ChatPanel from './components/ChatPanel';
 import FeedbackPanel from './components/FeedbackPanel';
-import { callGeminiText, callGeminiVoice, generateFeedback } from './services/geminiService';
+import { callGeminiText, generateFeedback } from './services/geminiService';
 
 const App: React.FC = () => {
   // State Machine
@@ -78,7 +78,7 @@ const App: React.FC = () => {
   };
 
   // Interaction Logic
-  const handleSendMessage = async (text: string, mode: 'text' | 'voice' | 'selection', language: Language) => {
+  const handleSendMessage = async (text: string, mode: 'text' | 'selection', language: Language) => {
     if (!selectedScenario) return;
 
     // 1. Add User Message
@@ -94,15 +94,9 @@ const App: React.FC = () => {
     setIsProcessing(true);
 
     try {
-      // 2. Route to appropriate Gemini Service
+      // 2. Call Gemini Service (Text only)
       let responseData: { text: string; options?: string[] } = { text: '' };
-      
-      if (mode === 'voice') {
-        const voiceText = await callGeminiVoice(updatedHistory, selectedScenario, language);
-        responseData = { text: voiceText };
-      } else {
-        responseData = await callGeminiText(text, updatedHistory, selectedScenario, language);
-      }
+      responseData = await callGeminiText(text, updatedHistory, selectedScenario, language);
 
       // 3. Add AI Response
       const aiMsg: Message = {
@@ -211,7 +205,7 @@ const App: React.FC = () => {
         <div className="flex items-center justify-end w-24 md:w-64 gap-2">
             <div className="hidden xl:flex items-center px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-100">
                 <LayoutTemplate className="w-4 h-4 text-slate-400 mr-2" />
-                <span className="text-xs text-slate-500 font-medium">v2.1</span>
+                <span className="text-xs text-slate-500 font-medium">v2.2</span>
             </div>
             {stage !== AppStage.ROLE_SELECTION && (
                 <button 

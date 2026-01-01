@@ -30,14 +30,14 @@ export interface Scenario {
   aiContext: string; // Hidden context for the AI (NEL framework rules)
   initialMessage?: string;
   tags: string[]; // e.g. "Home-School Partnership", "Child Observation"
-  mode: 'text' | 'voice'; // Primary interaction mode
+  mode: 'text'; // Pure text interaction
 }
 
 export interface Message {
   id: string;
   sender: 'user' | 'ai';
   text: string;
-  mode: 'text' | 'voice' | 'selection';
+  mode: 'text' | 'selection';
   options?: string[]; // For MCQ style interactions
   timestamp: number;
 }

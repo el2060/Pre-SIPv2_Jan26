@@ -1,15 +1,14 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Zap, Activity, Globe, MessageSquare } from 'lucide-react';
+import { Send, Globe, MessageSquare } from 'lucide-react';
 import { Message, Scenario, Language } from '../types';
 import Button from './Button';
-import VoiceControls from './VoiceControls';
 
 interface ChatPanelProps {
   scenario: Scenario;
   messages: Message[];
   isProcessing: boolean;
-  onSendMessage: (text: string, mode: 'text' | 'voice', language: Language) => void;
+  onSendMessage: (text: string, mode: 'text', language: Language) => void;
   onEndSession: () => void;
 }
 
@@ -38,18 +37,9 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     }
   };
 
-  // Updated to accept text from VoiceControls
-  const handleVoiceComplete = (transcribedText: string) => {
-    if (transcribedText && !isProcessing) {
-        onSendMessage(transcribedText, 'voice', language);
-    }
-  };
-
   const handleOptionClick = (optionText: string) => {
     onSendMessage(optionText, 'selection', language);
   };
-
-  const isVoiceMode = scenario.mode === 'voice';
 
   return (
     <div className="flex flex-col h-full bg-white relative">
@@ -98,7 +88,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center p-6 animate-fade-in-up">
             <div className="w-20 h-20 bg-indigo-50 rounded-[2rem] flex items-center justify-center mb-8 text-indigo-600 shadow-sm">
-               {isVoiceMode ? <Activity className="w-10 h-10" /> : <MessageSquare className="w-10 h-10" />}
+               <MessageSquare className="w-10 h-10" />
             </div>
             <h2 className="text-3xl font-bold text-slate-900 mb-3 tracking-tight">
                 {language === 'en' ? 'Start Chatting' : '开始对话'}
@@ -143,12 +133,6 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
               }`}
             >
               <p>{msg.text}</p>
-              {msg.mode === 'voice' && (
-                <div className="mt-3 flex items-center gap-2 text-xs opacity-70 pt-3 border-t border-white/20 font-medium">
-                   <Activity className="w-3.5 h-3.5" /> 
-                   {language === 'en' ? 'Transcribed from voice' : '语音转文字'}
-                </div>
-              )}
             </div>
             
             {/* Render Options if available (MCQ) */}
@@ -186,12 +170,11 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
       <div className="p-4 md:p-6 shrink-0 bg-white border-t border-slate-100 z-10">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-end gap-3 md:gap-4 bg-slate-50/50 rounded-[1.5rem] border border-slate-200 p-2 md:p-3 shadow-sm focus-within:ring-4 focus-within:ring-slate-100 transition-all">
-            <VoiceControls onRecordingComplete={handleVoiceComplete} disabled={isProcessing} />
             
             <form className="flex-1 flex gap-2 md:gap-3 items-end" onSubmit={handleTextSubmit}>
               <textarea
                 rows={1}
-                className="flex-1 bg-transparent text-slate-900 text-base md:text-lg placeholder:text-slate-400 resize-none py-3 px-2 outline-none"
+                className="flex-1 bg-transparent text-slate-900 text-base md:text-lg placeholder:text-slate-400 resize-none py-3 px-4 outline-none"
                 placeholder={language === 'en' ? "Type your response..." : "用中文输入你的回应..."}
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}

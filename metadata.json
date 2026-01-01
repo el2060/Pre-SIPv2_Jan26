@@ -1,7 +1,5 @@
 {
   "name": "Pre-SIP Practice Lab",
   "description": "A preparation chatbot for Early Childhood students using Google Gemini to simulate interactions with Children, Parents, and Co-workers.",
-  "requestFramePermissions": [
-    "microphone"
-  ]
+  "requestFramePermissions": []
 }

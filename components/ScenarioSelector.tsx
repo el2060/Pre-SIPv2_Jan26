@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ChevronRight, MessageSquare, Mic, Text as TextIcon, Lightbulb } from 'lucide-react';
+import { ChevronRight, MessageSquare, Lightbulb } from 'lucide-react';
 import { Role, Scenario, DifficultyLevel } from '../types';
 import { SCENARIOS } from '../constants';
 
@@ -74,8 +74,8 @@ const ScenarioSelector: React.FC<ScenarioSelectorProps> = ({ role, onSelectScena
                {/* Tags footer */}
                <div className="flex flex-wrap items-center gap-3 mt-auto">
                    <div className="flex items-center px-3 py-1.5 bg-slate-50 rounded-lg text-sm font-semibold text-slate-700 border border-slate-200">
-                      {scenario.mode === 'voice' ? <Mic className="w-4 h-4 mr-2 text-indigo-500" /> : <TextIcon className="w-4 h-4 mr-2 text-indigo-500" />}
-                      {scenario.mode === 'voice' ? 'Voice Interaction' : 'Text Interaction'}
+                      <MessageSquare className="w-4 h-4 mr-2 text-indigo-500" />
+                      Text Interaction
                    </div>
                    {scenario.tags.map(tag => (
                        <span key={tag} className="text-sm bg-orange-50 text-orange-800 px-3 py-1.5 rounded-lg border border-orange-100 font-medium">
