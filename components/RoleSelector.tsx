@@ -20,8 +20,13 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ onSelectRole }) => {
 
   return (
     <div className="flex flex-col items-center min-h-full py-12 px-6">
-      <div className="text-center mb-16 max-w-3xl">
-        <h2 className="text-3xl md:text-5xl font-bold text-slate-900 mb-4 tracking-tight">Who would you like to practice with?</h2>
+      <div className="text-center mb-16 w-full max-w-5xl mx-auto px-4">
+        <h2 
+            className="text-3xl md:text-5xl font-bold text-slate-900 mb-4 tracking-tight"
+            style={{ textWrap: 'balance' } as React.CSSProperties}
+        >
+            Who would you like to practice with?
+        </h2>
         <p className="text-xl text-slate-500 font-normal">选择你想要练习沟通的对象</p>
       </div>
       
