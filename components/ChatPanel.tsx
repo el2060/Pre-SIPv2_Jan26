@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Globe, MessageSquare, Target, Info, Lightbulb, X, Sparkles, BookOpen } from 'lucide-react';
+import { Send, Globe, Target, Info, Lightbulb, X, Sparkles, ClipboardCheck, HelpCircle, CheckCircle2 } from 'lucide-react';
 import { Message, Scenario, Language } from '../types';
 import Button from './Button';
 import { getCoachingTip } from '../services/geminiService';
@@ -50,6 +50,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   const [inputText, setInputText] = useState('');
   const [coachingTip, setCoachingTip] = useState<string | null>(null);
   const [isGettingTip, setIsGettingTip] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -132,6 +133,57 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   return (
     <div className="flex flex-col h-full bg-white relative">
       
+      {/* Help Modal */}
+      {showHelp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-fade-in" onClick={() => setShowHelp(false)}>
+           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative border border-slate-100" onClick={e => e.stopPropagation()}>
+              <button 
+                onClick={() => setShowHelp(false)} 
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              
+              <div className="flex items-center gap-2 mb-6">
+                <div className="bg-indigo-100 p-2 rounded-xl text-indigo-600">
+                    <HelpCircle className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900">How to use Practice Lab</h3>
+              </div>
+              
+              <div className="space-y-5">
+                 <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">1</div>
+                    <div>
+                        <h4 className="font-bold text-slate-900">Roleplay naturally</h4>
+                        <p className="text-sm text-slate-500 mt-1">Chat as if you are the teacher. The AI character will react to your tone and words.</p>
+                    </div>
+                 </div>
+                 
+                 <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center font-bold text-amber-600">2</div>
+                    <div>
+                        <h4 className="font-bold text-slate-900">Get Coaching Tips</h4>
+                        <p className="text-sm text-slate-500 mt-1">Stuck? Tap the <span className="inline-flex items-center justify-center bg-slate-100 rounded px-1.5 py-0.5 mx-1"><Lightbulb className="w-3 h-3 mr-1 text-amber-500"/> Bulb</span> icon for real-time advice based on the NEL framework.</p>
+                    </div>
+                 </div>
+
+                 <div className="flex gap-4">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center font-bold text-emerald-600">3</div>
+                    <div>
+                        <h4 className="font-bold text-slate-900">Review your Score</h4>
+                        <p className="text-sm text-slate-500 mt-1">When you feel the conversation is done, click <strong>"Finish & Review"</strong> to get your detailed performance scorecard.</p>
+                    </div>
+                 </div>
+              </div>
+              
+              <div className="mt-8 pt-6 border-t border-slate-100 text-center">
+                 <Button onClick={() => setShowHelp(false)} fullWidth>Got it!</Button>
+              </div>
+           </div>
+        </div>
+      )}
+
       {/* Chat Header */}
       <div className="absolute top-0 left-0 right-0 z-20 px-6 py-4 flex items-center justify-between bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm h-20">
         <div className="flex flex-col justify-center">
@@ -139,15 +191,43 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
            <p className="text-sm text-slate-500 font-medium">{scenario.titleZh}</p>
         </div>
         
-        <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={onEndSession} className="hidden lg:flex bg-white border-slate-200 text-slate-700 hover:bg-slate-50 font-medium px-4 h-9">
-                End Session
+        <div className="flex items-center gap-2 md:gap-3">
+             <button 
+                onClick={() => setShowHelp(true)}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all"
+                title="How to use"
+             >
+                <HelpCircle className="w-5 h-5" />
+            </button>
+            
+            <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+
+            <Button 
+                variant="primary" 
+                size="sm" 
+                onClick={onEndSession} 
+                className="hidden lg:flex bg-slate-900 text-white hover:bg-slate-800 font-medium px-4 h-9 shadow-sm"
+            >
+                <ClipboardCheck className="w-4 h-4 mr-2" />
+                Finish & Review
             </Button>
-            <div className="flex items-center bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+            
+            {/* Mobile Finish Button (Icon only) */}
+             <Button 
+                variant="primary" 
+                size="sm" 
+                onClick={onEndSession} 
+                className="lg:hidden bg-slate-900 text-white hover:bg-slate-800 font-medium w-9 h-9 p-0 flex items-center justify-center rounded-xl"
+                title="Finish & Review"
+            >
+                <ClipboardCheck className="w-4 h-4" />
+            </Button>
+
+            <div className="flex items-center bg-slate-100 p-1.5 rounded-xl border border-slate-200 ml-1">
                 <Globe className="w-4 h-4 text-slate-500 mx-2 hidden sm:block" />
                 <button 
                     onClick={() => onLanguageChange('zh')}
-                    className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-all duration-200 ${
+                    className={`px-3 md:px-4 py-1.5 text-xs md:text-sm font-bold rounded-lg transition-all duration-200 ${
                         language === 'zh' 
                         ? 'bg-white shadow-sm text-indigo-600 ring-1 ring-black/5' 
                         : 'text-slate-500 hover:text-slate-700'
@@ -157,13 +237,13 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                 </button>
                 <button 
                     onClick={() => onLanguageChange('en')}
-                    className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-all duration-200 ${
+                    className={`px-3 md:px-4 py-1.5 text-xs md:text-sm font-bold rounded-lg transition-all duration-200 ${
                         language === 'en' 
                         ? 'bg-white shadow-sm text-indigo-600 ring-1 ring-black/5' 
                         : 'text-slate-500 hover:text-slate-700'
                     }`}
                 >
-                    English
+                    EN
                 </button>
             </div>
         </div>
@@ -188,12 +268,18 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                     <p className="text-slate-800 text-lg leading-relaxed font-medium">
                         {language === 'en' ? scenario.context : (scenario.contextZh || scenario.context)}
                     </p>
-                    <div className="mt-4 pt-4 border-t border-indigo-200/30 flex items-center gap-2">
-                         <Info className="w-4 h-4 text-indigo-400" />
-                         <span className="text-sm font-semibold text-indigo-600">
-                             {language === 'en' ? 'Tip: Focus on ' : '提示：关注 '}
-                             {scenario.tags.join(language === 'en' ? ', ' : '、')}
-                         </span>
+                    <div className="mt-4 pt-4 border-t border-indigo-200/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                         <div className="flex items-center gap-2">
+                            <Info className="w-4 h-4 text-indigo-400" />
+                            <span className="text-sm font-semibold text-indigo-600">
+                                {language === 'en' ? 'Focus: ' : '重点：'}
+                                {scenario.tags.join(language === 'en' ? ', ' : '、')}
+                            </span>
+                         </div>
+                         <div className="flex items-center gap-1.5 text-indigo-800 text-xs font-bold bg-white/50 px-3 py-1.5 rounded-lg border border-indigo-100/50">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            {language === 'en' ? "Done? Click 'Finish & Review'" : "完成后点击 'Finish & Review'"}
+                         </div>
                     </div>
                 </div>
             </div>

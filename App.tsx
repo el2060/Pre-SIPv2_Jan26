@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ArrowLeft, RefreshCw, LayoutTemplate } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Calendar } from 'lucide-react';
 import { AppStage, Role, Scenario, Message, FeedbackData, Language } from './types';
 import RoleSelector from './components/RoleSelector';
 import ScenarioSelector from './components/ScenarioSelector';
@@ -21,6 +21,13 @@ const App: React.FC = () => {
   // UI State
   const [isProcessing, setIsProcessing] = useState(false);
   const [language, setLanguage] = useState<Language>('en');
+
+  // Date for header
+  const currentDate = new Date().toLocaleDateString('en-SG', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  });
 
   // Navigation Handlers
   const handleSelectRole = (role: Role) => {
@@ -252,8 +259,8 @@ const App: React.FC = () => {
 
         <div className="flex items-center justify-end w-24 md:w-64 gap-2">
             <div className="hidden xl:flex items-center px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-100">
-                <LayoutTemplate className="w-4 h-4 text-slate-400 mr-2" />
-                <span className="text-xs text-slate-500 font-medium">v2.3</span>
+                <Calendar className="w-4 h-4 text-slate-400 mr-2" />
+                <span className="text-xs text-slate-500 font-medium">Updated {currentDate}</span>
             </div>
             {stage !== AppStage.ROLE_SELECTION && (
                 <button 
