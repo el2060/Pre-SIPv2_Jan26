@@ -1,8 +1,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Globe, MessageSquare, Target, Info } from 'lucide-react';
+import { Send, Globe, MessageSquare, Target, Info, Lightbulb, X, Sparkles, BookOpen } from 'lucide-react';
 import { Message, Scenario, Language } from '../types';
 import Button from './Button';
+import { getCoachingTip } from '../services/geminiService';
 
 interface ChatPanelProps {
   scenario: Scenario;
@@ -16,14 +17,11 @@ interface ChatPanelProps {
 
 // Helper to format text with *actions* in italics
 const FormattedText: React.FC<{ text: string; isUser: boolean }> = ({ text, isUser }) => {
-  // Split by asterisks: "Hello *smiles*" -> ["Hello ", "*smiles*", ""]
   const parts = text.split(/(\*[^*]+\*)/g);
-
   return (
     <p>
       {parts.map((part, index) => {
         if (part.startsWith('*') && part.endsWith('*')) {
-          // Remove asterisks and style
           const content = part.slice(1, -1);
           return (
             <span 
@@ -50,30 +48,91 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   onEndSession
 }) => {
   const [inputText, setInputText] = useState('');
+  const [coachingTip, setCoachingTip] = useState<string | null>(null);
+  const [isGettingTip, setIsGettingTip] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isProcessing]);
+  }, [messages, isProcessing, coachingTip]);
 
   const handleTextSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (inputText.trim() && !isProcessing) {
       onSendMessage(inputText, 'text', language);
       setInputText('');
+      setCoachingTip(null); // Clear tip on send
     }
   };
 
   const handleOptionClick = (optionText: string) => {
     onSendMessage(optionText, 'selection', language);
+    setCoachingTip(null);
+  };
+
+  const handleGetTip = async () => {
+    if (isGettingTip) return;
+    setIsGettingTip(true);
+    try {
+        const tip = await getCoachingTip(messages, scenario, language);
+        setCoachingTip(tip);
+    } catch (err) {
+        console.error(err);
+    } finally {
+        setIsGettingTip(false);
+    }
+  };
+
+  // Helper to parse the structured tip from Gemini
+  const renderStructuredTip = (text: string) => {
+    if (text.includes('Observation:') || text.includes('NEL Link:') || text.includes('Coach Tip:')) {
+        const lines = text.split('\n').filter(l => l.trim().length > 0);
+        return (
+            <div className="space-y-3 mt-1">
+                {lines.map((line, idx) => {
+                    const separatorIndex = line.indexOf(':');
+                    if (separatorIndex > -1) {
+                        const label = line.substring(0, separatorIndex).trim();
+                        const content = line.substring(separatorIndex + 1).trim();
+                        
+                        let icon = null;
+                        let labelColor = "text-amber-900";
+                        let bgColor = "bg-transparent";
+
+                        if (label.includes('Observation')) icon = "👀";
+                        if (label.includes('NEL Link')) icon = "📘";
+                        if (label.includes('Coach Tip')) {
+                            icon = "💡";
+                            bgColor = "bg-amber-100/50 p-2 rounded-lg -mx-2";
+                        }
+
+                        return (
+                            <div key={idx} className={`flex flex-col gap-1 ${bgColor}`}>
+                                <span className={`text-[11px] uppercase tracking-wider font-bold ${labelColor} flex items-center gap-1.5 opacity-70`}>
+                                   {icon} {label}
+                                </span>
+                                <span className="text-slate-800 font-medium text-[15px] leading-snug">
+                                    {content}
+                                </span>
+                            </div>
+                        );
+                    }
+                    return <p key={idx} className="text-amber-900 text-sm">{line}</p>;
+                })}
+            </div>
+        );
+    }
+    // Fallback for simple text
+    return <p className="text-amber-900 text-base leading-relaxed font-medium">{text}</p>;
   };
 
   return (
     <div className="flex flex-col h-full bg-white relative">
       
-      {/* Chat Header with Language Toggle */}
+      {/* Chat Header */}
       <div className="absolute top-0 left-0 right-0 z-20 px-6 py-4 flex items-center justify-between bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm h-20">
         <div className="flex flex-col justify-center">
            <h3 className="font-bold text-slate-900 text-base md:text-lg leading-tight">{scenario.title}</h3>
@@ -113,12 +172,10 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto pt-24 p-6 md:p-8 space-y-8 relative scroll-smooth" ref={scrollContainerRef}>
         
-        {/* Mission Briefing Card - Always Visible */}
+        {/* Mission Briefing Card */}
         <div className="w-full max-w-[90%] md:max-w-[75%] mx-auto mb-8 animate-fade-in-down">
             <div className="bg-indigo-50/60 border border-indigo-100 rounded-[1.5rem] p-6 shadow-sm relative overflow-hidden">
-                {/* Decorative background element */}
                 <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-100/50 rounded-bl-full -mr-4 -mt-4" />
-                
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-3">
                         <div className="bg-indigo-600 text-white p-1.5 rounded-lg shadow-sm">
@@ -128,11 +185,9 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                             {language === 'en' ? 'Your Mission' : '任务目标'}
                         </span>
                     </div>
-                    
                     <p className="text-slate-800 text-lg leading-relaxed font-medium">
                         {language === 'en' ? scenario.context : (scenario.contextZh || scenario.context)}
                     </p>
-                    
                     <div className="mt-4 pt-4 border-t border-indigo-200/30 flex items-center gap-2">
                          <Info className="w-4 h-4 text-indigo-400" />
                          <span className="text-sm font-semibold text-indigo-600">
@@ -157,7 +212,6 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
             key={msg.id}
             className={`flex flex-col w-full ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
           >
-            {/* Sender Name */}
             <span className={`text-xs font-bold text-slate-400 mb-2 px-2 uppercase tracking-wide ${msg.sender === 'user' ? 'mr-1' : 'ml-1'}`}>
                {msg.sender === 'user' 
                   ? (language === 'en' ? 'YOU' : '你') 
@@ -180,7 +234,6 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
               <FormattedText text={msg.text} isUser={msg.sender === 'user'} />
             </div>
             
-            {/* Render Options if available (MCQ) */}
             {msg.options && msg.options.length > 0 && (
               <div className="mt-5 space-y-4 flex flex-col items-start w-full max-w-[90%] md:max-w-[75%] animate-fade-in-up">
                 {msg.options.map((option, idx) => (
@@ -208,14 +261,53 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
             </div>
           </div>
         )}
+        
         <div ref={messagesEndRef} className="h-4" />
       </div>
 
       {/* Input Area */}
-      <div className="p-4 md:p-6 shrink-0 bg-white border-t border-slate-100 z-10">
+      <div className="p-4 md:p-6 shrink-0 bg-white border-t border-slate-100 z-10 relative">
+        
+        {/* Mentor Tip Card (Slides up when active) */}
+        {coachingTip && (
+            <div className="absolute bottom-full left-0 right-0 p-4 md:p-6 pb-2 animate-fade-in-up z-20">
+                <div className="max-w-4xl mx-auto bg-white/95 backdrop-blur-sm border border-amber-200 rounded-2xl p-5 shadow-xl shadow-amber-100/50 flex items-start gap-4 relative ring-1 ring-amber-100">
+                    <div className="flex flex-col items-center gap-2 shrink-0 pt-1">
+                         <div className="p-2 bg-amber-100 rounded-xl text-amber-600 shadow-sm">
+                            <Lightbulb className="w-5 h-5 fill-current" />
+                        </div>
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-bold text-slate-800 text-sm uppercase tracking-wide">Mentor Feedback</h4>
+                            <span className="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-100 font-semibold">NIEC Aligned</span>
+                        </div>
+                        {renderStructuredTip(coachingTip)}
+                    </div>
+                    <button 
+                        onClick={() => setCoachingTip(null)}
+                        className="p-1.5 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors -mr-2 -mt-2"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+            </div>
+        )}
+
         <div className="max-w-4xl mx-auto">
           <div className="flex items-end gap-3 md:gap-4 bg-slate-50/50 rounded-[1.5rem] border border-slate-200 p-2 md:p-3 shadow-sm focus-within:ring-4 focus-within:ring-slate-100 transition-all">
             
+            {/* Coach Me Button */}
+            <Button
+                variant="ghost"
+                className={`h-12 w-12 md:h-14 md:w-14 rounded-2xl border border-slate-200 bg-white ${isGettingTip ? 'animate-pulse' : ''}`}
+                onClick={handleGetTip}
+                disabled={isProcessing || isGettingTip}
+                title="Get Coaching Tip"
+            >
+                {isGettingTip ? <Sparkles className="w-5 h-5 text-indigo-500" /> : <Lightbulb className="w-5 h-5 text-amber-500" />}
+            </Button>
+
             <form className="flex-1 flex gap-2 md:gap-3 items-end" onSubmit={handleTextSubmit}>
               <textarea
                 rows={1}
@@ -245,7 +337,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
           </div>
           <div className="text-center mt-4">
               <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-4 py-1.5 rounded-full border border-slate-100">
-                  NEL Framework Active · {scenario.roleId === 'children' ? 'Focus on Positive Guidance' : 'Focus on Professional Communication'}
+                  NEL Framework Active · Need help? Tap the 💡
               </span>
           </div>
         </div>

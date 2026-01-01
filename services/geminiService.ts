@@ -74,6 +74,51 @@ export const callGeminiText = async (
   }
 };
 
+export const getCoachingTip = async (
+  history: Message[],
+  scenario: Scenario,
+  language: Language = 'en'
+): Promise<string> => {
+  // Use FULL history for deep context analysis
+  const historyContext = history.map(msg => 
+    `${msg.sender === 'user' ? 'Student' : 'Character'}: ${msg.text}`
+  ).join('\n');
+
+  const instruction = `
+    You are a supportive NIEC Practicum Mentor for an Early Childhood student.
+    
+    SCENARIO: "${scenario.title}"
+    GOAL: ${scenario.context}
+    NEL FOCUS: ${scenario.tags.join(', ')}
+
+    TRANSCRIPT SO FAR:
+    ${historyContext}
+
+    TASK:
+    Analyze the *entire* interaction above. Provide immediate coaching feedback.
+    
+    STRICT OUTPUT FORMAT (Do not use Markdown formatting like **bold**, just Label: Content):
+    Observation: [Briefly state what the student did well or missed recently]
+    NEL Link: [Link to specific NEL Framework domain or NIEC competency]
+    Coach Tip: [Concrete, actionable suggestion for the NEXT response]
+    
+    CONSTRAINTS:
+    - Keep it succinct (under 60 words total).
+    - Tone: Encouraging but professional.
+    - Language: ${language === 'zh' ? 'Mandarin Chinese' : 'English'}.
+  `;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: MODEL_CHAT,
+      contents: instruction,
+    });
+    return response.text || "Try to empathize with the character.";
+  } catch (error) {
+    return "Observation: Analyzing context...\nCoach Tip: Focus on the scenario objectives.";
+  }
+};
+
 export const generateFeedback = async (
   history: Message[],
   scenario: Scenario
