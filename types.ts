@@ -27,8 +27,10 @@ export interface Scenario {
   difficulty: DifficultyLevel;
   description: string;
   context: string; // The situation description shown to user
+  contextZh: string; // Mandarin situation description
   aiContext: string; // Hidden context for the AI (NEL framework rules)
   initialMessage?: string;
+  initialMessageZh?: string; // Mandarin initial message
   tags: string[]; // e.g. "Home-School Partnership", "Child Observation"
   mode: 'text'; // Pure text interaction
 }

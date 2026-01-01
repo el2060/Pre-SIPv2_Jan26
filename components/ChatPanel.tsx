@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Globe, MessageSquare } from 'lucide-react';
+import { Send, Globe, MessageSquare, Target, Info } from 'lucide-react';
 import { Message, Scenario, Language } from '../types';
 import Button from './Button';
 
@@ -8,19 +8,48 @@ interface ChatPanelProps {
   scenario: Scenario;
   messages: Message[];
   isProcessing: boolean;
+  language: Language;
+  onLanguageChange: (lang: Language) => void;
   onSendMessage: (text: string, mode: 'text', language: Language) => void;
   onEndSession: () => void;
 }
+
+// Helper to format text with *actions* in italics
+const FormattedText: React.FC<{ text: string; isUser: boolean }> = ({ text, isUser }) => {
+  // Split by asterisks: "Hello *smiles*" -> ["Hello ", "*smiles*", ""]
+  const parts = text.split(/(\*[^*]+\*)/g);
+
+  return (
+    <p>
+      {parts.map((part, index) => {
+        if (part.startsWith('*') && part.endsWith('*')) {
+          // Remove asterisks and style
+          const content = part.slice(1, -1);
+          return (
+            <span 
+              key={index} 
+              className={`italic ${isUser ? 'text-slate-200' : 'text-slate-500'} text-[0.95em]`}
+            >
+              {content}
+            </span>
+          );
+        }
+        return <span key={index}>{part}</span>;
+      })}
+    </p>
+  );
+};
 
 const ChatPanel: React.FC<ChatPanelProps> = ({
   scenario,
   messages,
   isProcessing,
+  language,
+  onLanguageChange,
   onSendMessage,
   onEndSession
 }) => {
   const [inputText, setInputText] = useState('');
-  const [language, setLanguage] = useState<Language>('en'); // Default to English
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
@@ -58,7 +87,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
             <div className="flex items-center bg-slate-100 p-1.5 rounded-xl border border-slate-200">
                 <Globe className="w-4 h-4 text-slate-500 mx-2 hidden sm:block" />
                 <button 
-                    onClick={() => setLanguage('zh')}
+                    onClick={() => onLanguageChange('zh')}
                     className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-all duration-200 ${
                         language === 'zh' 
                         ? 'bg-white shadow-sm text-indigo-600 ring-1 ring-black/5' 
@@ -68,7 +97,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                     中文
                 </button>
                 <button 
-                    onClick={() => setLanguage('en')}
+                    onClick={() => onLanguageChange('en')}
                     className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-all duration-200 ${
                         language === 'en' 
                         ? 'bg-white shadow-sm text-indigo-600 ring-1 ring-black/5' 
@@ -84,27 +113,43 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto pt-24 p-6 md:p-8 space-y-8 relative scroll-smooth" ref={scrollContainerRef}>
         
-        {/* Empty State / Initial View */}
-        {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-center p-6 animate-fade-in-up">
-            <div className="w-20 h-20 bg-indigo-50 rounded-[2rem] flex items-center justify-center mb-8 text-indigo-600 shadow-sm">
-               <MessageSquare className="w-10 h-10" />
+        {/* Mission Briefing Card - Always Visible */}
+        <div className="w-full max-w-[90%] md:max-w-[75%] mx-auto mb-8 animate-fade-in-down">
+            <div className="bg-indigo-50/60 border border-indigo-100 rounded-[1.5rem] p-6 shadow-sm relative overflow-hidden">
+                {/* Decorative background element */}
+                <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-100/50 rounded-bl-full -mr-4 -mt-4" />
+                
+                <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="bg-indigo-600 text-white p-1.5 rounded-lg shadow-sm">
+                            <Target className="w-4 h-4" />
+                        </div>
+                        <span className="text-indigo-900 font-bold text-xs uppercase tracking-wider">
+                            {language === 'en' ? 'Your Mission' : '任务目标'}
+                        </span>
+                    </div>
+                    
+                    <p className="text-slate-800 text-lg leading-relaxed font-medium">
+                        {language === 'en' ? scenario.context : (scenario.contextZh || scenario.context)}
+                    </p>
+                    
+                    <div className="mt-4 pt-4 border-t border-indigo-200/30 flex items-center gap-2">
+                         <Info className="w-4 h-4 text-indigo-400" />
+                         <span className="text-sm font-semibold text-indigo-600">
+                             {language === 'en' ? 'Tip: Focus on ' : '提示：关注 '}
+                             {scenario.tags.join(language === 'en' ? ', ' : '、')}
+                         </span>
+                    </div>
+                </div>
             </div>
-            <h2 className="text-3xl font-bold text-slate-900 mb-3 tracking-tight">
-                {language === 'en' ? 'Start Chatting' : '开始对话'}
-            </h2>
-            <p className="text-lg text-slate-500 mb-10">
-                {language === 'en' ? 'Type your response in English' : '输入你的中文回应'}
-            </p>
             
-            <div className="bg-slate-50 px-8 py-8 rounded-[2rem] max-w-xl border border-slate-100 shadow-sm mx-auto">
-               <span className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Scenario Context</span>
-               <p className="text-slate-700 leading-relaxed text-lg font-medium">
-                 {scenario.context}
-               </p>
+            <div className="flex justify-center mt-6 mb-2">
+                <span className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em] bg-white px-3 relative z-10">
+                    Interaction Started
+                </span>
+                <div className="absolute left-0 right-0 top-1/2 h-px bg-slate-100 -z-0"></div>
             </div>
-          </div>
-        )}
+        </div>
 
         {/* Message List */}
         {messages.map((msg) => (
@@ -132,7 +177,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                   : 'bg-white border-2 border-slate-100 text-slate-800 rounded-bl-none'
               }`}
             >
-              <p>{msg.text}</p>
+              <FormattedText text={msg.text} isUser={msg.sender === 'user'} />
             </div>
             
             {/* Render Options if available (MCQ) */}

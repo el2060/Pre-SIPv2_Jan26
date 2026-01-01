@@ -20,6 +20,7 @@ const App: React.FC = () => {
   
   // UI State
   const [isProcessing, setIsProcessing] = useState(false);
+  const [language, setLanguage] = useState<Language>('en');
 
   // Navigation Handlers
   const handleSelectRole = (role: Role) => {
@@ -31,23 +32,35 @@ const App: React.FC = () => {
     setSelectedScenario(scenario);
     setMessages([]); // Reset chat
     
-    // Check if scenario has options (like T1 VSLD scenario)
+    // Determine initial message based on current language
+    const currentInitialMsg = language === 'zh' 
+        ? (scenario.initialMessageZh || scenario.initialMessage || scenario.contextZh)
+        : (scenario.initialMessage || scenario.context);
+
+    // Initial Options for T1 (Language aware)
     let initialOptions: string[] | undefined = undefined;
     if (scenario.id === 't1') {
-       initialOptions = [
-         "A: Tell him to stop crying and build it again.",
-         "B: Acknowledge his frustration: 'It is frustrating when it falls. Let's see why.'",
-         "C: Build it for him so he feels successful."
-       ];
+       if (language === 'zh') {
+           initialOptions = [
+             "A: 叫他别哭，重新建一个。",
+             "B: 认可他的挫败感：“倒了确实很令人沮丧。我们来看看为什么。”",
+             "C: 帮他建好，让他有成就感。"
+           ];
+       } else {
+           initialOptions = [
+             "A: Tell him to stop crying and build it again.",
+             "B: Acknowledge his frustration: 'It is frustrating when it falls. Let's see why.'",
+             "C: Build it for him so he feels successful."
+           ];
+       }
     }
 
     // Only add initial message if the scenario has one defined
     if (scenario.initialMessage || initialOptions) {
-        const initialText = scenario.initialMessage || scenario.context;
         const initialMsg: Message = {
         id: 'init-1',
         sender: 'ai',
-        text: initialText,
+        text: currentInitialMsg,
         mode: 'text',
         options: initialOptions,
         timestamp: Date.now()
@@ -56,6 +69,41 @@ const App: React.FC = () => {
     }
     
     setStage(AppStage.INTERACTION);
+  };
+
+  // Language Toggle Handler that updates existing Initial Message
+  const handleLanguageChange = (newLang: Language) => {
+    setLanguage(newLang);
+    
+    // If we are in interaction mode and the first message is the initial one, swap it
+    if (stage === AppStage.INTERACTION && selectedScenario && messages.length > 0 && messages[0].id === 'init-1') {
+        const newText = newLang === 'zh'
+            ? (selectedScenario.initialMessageZh || selectedScenario.initialMessage || selectedScenario.contextZh)
+            : (selectedScenario.initialMessage || selectedScenario.context);
+        
+        let newOptions: string[] | undefined = undefined;
+        if (selectedScenario.id === 't1') {
+           if (newLang === 'zh') {
+               newOptions = [
+                 "A: 叫他别哭，重新建一个。",
+                 "B: 认可他的挫败感：“倒了确实很令人沮丧。我们来看看为什么。”",
+                 "C: 帮他建好，让他有成就感。"
+               ];
+           } else {
+               newOptions = [
+                 "A: Tell him to stop crying and build it again.",
+                 "B: Acknowledge his frustration: 'It is frustrating when it falls. Let's see why.'",
+                 "C: Build it for him so he feels successful."
+               ];
+           }
+        }
+
+        setMessages(prev => {
+            const newMsgs = [...prev];
+            newMsgs[0] = { ...newMsgs[0], text: newText, options: newOptions };
+            return newMsgs;
+        });
+    }
   };
 
   const handleBack = () => {
@@ -78,7 +126,7 @@ const App: React.FC = () => {
   };
 
   // Interaction Logic
-  const handleSendMessage = async (text: string, mode: 'text' | 'selection', language: Language) => {
+  const handleSendMessage = async (text: string, mode: 'text' | 'selection', lang: Language) => {
     if (!selectedScenario) return;
 
     // 1. Add User Message
@@ -96,7 +144,7 @@ const App: React.FC = () => {
     try {
       // 2. Call Gemini Service (Text only)
       let responseData: { text: string; options?: string[] } = { text: '' };
-      responseData = await callGeminiText(text, updatedHistory, selectedScenario, language);
+      responseData = await callGeminiText(text, updatedHistory, selectedScenario, lang);
 
       // 3. Add AI Response
       const aiMsg: Message = {
@@ -114,7 +162,7 @@ const App: React.FC = () => {
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         sender: 'ai',
-        text: language === 'en' ? "System: Connection interruption. Please try again." : "系统：连接中断，请重试。",
+        text: lang === 'en' ? "System: Connection interruption. Please try again." : "系统：连接中断，请重试。",
         mode: 'text',
         timestamp: Date.now()
       }]);
@@ -205,7 +253,7 @@ const App: React.FC = () => {
         <div className="flex items-center justify-end w-24 md:w-64 gap-2">
             <div className="hidden xl:flex items-center px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-100">
                 <LayoutTemplate className="w-4 h-4 text-slate-400 mr-2" />
-                <span className="text-xs text-slate-500 font-medium">v2.2</span>
+                <span className="text-xs text-slate-500 font-medium">v2.3</span>
             </div>
             {stage !== AppStage.ROLE_SELECTION && (
                 <button 
@@ -257,6 +305,8 @@ const App: React.FC = () => {
                 scenario={selectedScenario}
                 messages={messages}
                 isProcessing={isProcessing}
+                language={language}
+                onLanguageChange={handleLanguageChange}
                 onSendMessage={handleSendMessage}
                 onEndSession={handleEndSession}
               />
