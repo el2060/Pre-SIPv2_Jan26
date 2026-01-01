@@ -1,22 +1,27 @@
 
 import React from 'react';
-import { CheckCircle, Lightbulb, PenTool, RefreshCw, BookOpen, Languages } from 'lucide-react';
-import { FeedbackData } from '../types';
+import { CheckCircle, Lightbulb, RefreshCw, BookOpen, Languages } from 'lucide-react';
+import { FeedbackData, Language } from '../types';
 import Button from './Button';
 
 interface FeedbackPanelProps {
   data: FeedbackData | null;
   isLoading: boolean;
   onReset: () => void;
+  language: Language;
 }
 
-const FeedbackPanel: React.FC<FeedbackPanelProps> = ({ data, isLoading, onReset }) => {
+const FeedbackPanel: React.FC<FeedbackPanelProps> = ({ data, isLoading, onReset, language }) => {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center bg-white">
         <div className="w-16 h-16 border-4 border-slate-100 border-t-indigo-600 rounded-full animate-spin mb-6" />
         <h3 className="text-2xl font-bold text-slate-900">Evaluating Performance...</h3>
-        <p className="text-lg text-slate-500 mt-2">Checking against NEL Framework & Chinese Proficiency.</p>
+        <p className="text-lg text-slate-500 mt-2">
+          {language === 'zh' 
+            ? "Checking against NEL Framework & Chinese Proficiency." 
+            : "Checking against NEL Framework & Professional Communication."}
+        </p>
       </div>
     );
   }
@@ -34,14 +39,16 @@ const FeedbackPanel: React.FC<FeedbackPanelProps> = ({ data, isLoading, onReset 
 
         {/* Scores Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Chinese Proficiency */}
+          {/* Communication / Language Score */}
           <div className="bg-white border border-indigo-100 rounded-[2rem] p-8 shadow-xl shadow-indigo-100/50 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-full -mr-8 -mt-8 opacity-50" />
             <div className="flex items-center gap-3 mb-4 relative z-10">
               <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
                  <Languages className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-bold text-indigo-900">Chinese Proficiency</h3>
+              <h3 className="text-lg font-bold text-indigo-900">
+                {language === 'zh' ? 'Chinese Proficiency' : 'Communication Skills'}
+              </h3>
             </div>
             <div className="flex items-baseline gap-2 mb-4 relative z-10">
                 <span className="text-5xl md:text-6xl font-bold text-indigo-600 tracking-tight">{data.languageProficiency.score}</span>

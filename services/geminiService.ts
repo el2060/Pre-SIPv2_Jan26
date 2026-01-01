@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { FeedbackData, Message, Scenario, Language } from '../types';
 
@@ -94,12 +95,13 @@ export const getCoachingTip = async (
     ${historyContext}
 
     TASK:
-    Analyze the *entire* interaction above. Provide immediate coaching feedback.
+    Analyze the *entire* interaction above. The student is about to respond.
+    Provide a forward-looking HINT or SUGGESTION.
     
     STRICT OUTPUT FORMAT (Do not use Markdown formatting like **bold**, just Label: Content):
-    Observation: [Briefly state what the student did well or missed recently]
+    Situation: [Briefly analyze the character's current state/emotion]
     NEL Link: [Link to specific NEL Framework domain or NIEC competency]
-    Coach Tip: [Concrete, actionable suggestion for the NEXT response]
+    Suggestion: [Concrete, actionable strategy for the user's NEXT response]
     
     CONSTRAINTS:
     - Keep it succinct (under 60 words total).
@@ -112,15 +114,16 @@ export const getCoachingTip = async (
       model: MODEL_CHAT,
       contents: instruction,
     });
-    return response.text || "Try to empathize with the character.";
+    return response.text || "Suggestion: Try acknowledging their feelings first.";
   } catch (error) {
-    return "Observation: Analyzing context...\nCoach Tip: Focus on the scenario objectives.";
+    return "Situation: Analyzing context...\nSuggestion: Focus on the scenario objectives.";
   }
 };
 
 export const generateFeedback = async (
   history: Message[],
-  scenario: Scenario
+  scenario: Scenario,
+  language: Language = 'en'
 ): Promise<FeedbackData> => {
   
   const transcript = history.map(m => `[${m.sender.toUpperCase()}] ${m.text}`).join('\n');
@@ -131,11 +134,13 @@ export const generateFeedback = async (
     
     Scenario: ${scenario.title} (${scenario.roleId})
     Context: ${scenario.context}
+    Language Mode: ${language === 'zh' ? 'Mandarin Chinese' : 'English'}
+    
     Student Transcript:
     ${transcript}
     
     Analyze:
-    1. Language Proficiency (bilingual capability if applicable).
+    1. ${language === 'zh' ? 'Chinese Proficiency (grammar, vocabulary, tone)' : 'Communication Skills (professional tone, clarity, local context)'}.
     2. NEL Framework Alignment (scaffolding, positive guidance, professional ethics).
     3. Strengths and Areas for Growth.
   `;

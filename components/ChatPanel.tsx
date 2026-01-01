@@ -130,6 +130,9 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     return <p className="text-amber-900 text-base leading-relaxed font-medium">{text}</p>;
   };
 
+  // Determine if we should show the "Stuck?" tooltip
+  const showCoachMark = messages.filter(m => m.sender === 'user').length === 0 && !coachingTip;
+
   return (
     <div className="flex flex-col h-full bg-white relative">
       
@@ -380,7 +383,18 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
             </div>
         )}
 
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto relative"> {/* Added relative for tooltip positioning */}
+          
+          {/* New User Coach Mark / Tooltip */}
+          {showCoachMark && (
+             <div className="absolute -top-12 left-0 md:left-2 animate-bounce z-30 pointer-events-none">
+                 <div className="bg-indigo-600 text-white text-xs md:text-sm font-bold px-4 py-2 rounded-xl shadow-lg flex items-center gap-2">
+                     <span>Stuck? Get a Hint!</span>
+                     <div className="absolute -bottom-1 left-6 w-3 h-3 bg-indigo-600 rotate-45"></div>
+                 </div>
+             </div>
+          )}
+
           <div className="flex items-end gap-3 md:gap-4 bg-slate-50/50 rounded-[1.5rem] border border-slate-200 p-2 md:p-3 shadow-sm focus-within:ring-4 focus-within:ring-slate-100 transition-all">
             
             {/* Coach Me Button */}
@@ -422,8 +436,12 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
             </form>
           </div>
           <div className="text-center mt-4">
-              <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-4 py-1.5 rounded-full border border-slate-100">
-                  NEL Framework Active · Need help? Tap the 💡
+              <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-4 py-1.5 rounded-full border border-slate-100 flex items-center justify-center gap-2 inline-flex">
+                  <span>NEL Framework Active</span>
+                  <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                  <span className="text-indigo-500 flex items-center gap-1 cursor-pointer hover:text-indigo-600 transition-colors" onClick={handleGetTip}>
+                      Tap <Lightbulb className="w-3 h-3 fill-current" /> for hints
+                  </span>
               </span>
           </div>
         </div>

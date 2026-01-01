@@ -184,7 +184,7 @@ const App: React.FC = () => {
     setIsProcessing(true);
     
     try {
-      const feedbackData = await generateFeedback(messages, selectedScenario);
+      const feedbackData = await generateFeedback(messages, selectedScenario, language);
       setFeedback(feedbackData);
     } catch (error) {
       console.error("Feedback generation error", error);
@@ -326,6 +326,7 @@ const App: React.FC = () => {
                  data={feedback} 
                  isLoading={isProcessing}
                  onReset={handleRestart}
+                 language={language}
                />
             </div>
           )}
